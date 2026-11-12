@@ -23,13 +23,13 @@ description: 对非平凡技术设计执行基于代码证据的独立评审、�
 
 1. 完整读取 `references/review-rubric.md`。
 2. 将输入整理为 canonical brief：目标、非目标、现状证据、不变量、接口与数据约束、验收标准、已接受风险、未知项。
-3. 沿真实代码路径建立 evidence index，覆盖入口、调用方、数据读写、旁路实现、异步副作用、错误处理、部署和回滚路径。未核实推断标记为 `unknown`。
+3. 沿真实代码路径建立 evidence index，覆盖入口、调用方、共享实现的实际消费者、数据读写、旁路实现、异步副作用、错误处理、部署和回滚路径；涉及容量或资源边界时，标明限制作用域和关键控制顺序。未核实推断标记为 `unknown`。
 4. 并行启动三个上下文独立、只读 reviewer：
    - 证据与契约 reviewer：核对需求、接口、兼容性、入口、调用方和副作用。
    - 故障与安全 reviewer：核对并发、事务、幂等、容量、安全、迁移、降级和回滚。
    - 可执行性与验证 reviewer：核对实施顺序、依赖、测试、部署、验收和可观测性。
 5. reviewer 只接收 canonical brief、evidence index 和当前设计，不接收作者辩护或其他 reviewer 的推理。reviewer 按 rubric 输出 findings，不修改设计。
-6. 父 agent 去重并逐条裁决 finding，记录 `accepted`、`rejected`、`duplicate`、`requires-user-decision`、`deferred` 或 `non-goal` 及理由。
+6. 父 agent 去重并逐条裁决 finding，记录 `accepted`、`rejected`、`duplicate`、`requires-user-decision`、`deferred` 或 `non-goal` 及理由。发现目标范围外的实际消费者时记录其影响；现有目标、兼容策略或业务语义不足以决定其行为时，具体处置标记为 `requires-user-decision`，不因发现复用自动扩大修改范围。
 7. 仅修订已接受的 P0/P1；P2/P3 保留在账本中，除非它们阻止 P0/P1 闭环或用户明确要求处理。
 8. 修订后让受影响 reviewer 定向复查，再启动一个未参与前序评审的 final reviewer。final reviewer 只看原始约束、最终设计和证据，不看前序推理。
 9. 最多执行三轮完整评审。满足质量门禁时输出 `PASS`；达到上限仍有已接受的 P0/P1 时输出 `NOT_CONVERGED` 和阻塞项，不得声称通过。
@@ -40,7 +40,7 @@ description: 对非平凡技术设计执行基于代码证据的独立评审、�
 
 - 完整评审轮次中没有已接受的 P0/P1。
 - 每项验收标准均映射到设计章节、代码位置和验证方式。
-- 所有已识别入口、旁路和副作用均有明确结论。
+- 所有已识别入口、旁路、共享消费者和副作用均有基于证据的影响结论或明确待决策状态。
 - 未知项、残余风险和回滚限制均已记录。
 - 用户明确接受的风险和非目标未被重新扩入实施范围。
 
