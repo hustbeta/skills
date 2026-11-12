@@ -1,4 +1,176 @@
 {
   "skill_name": "design-assurance-loop",
-  "evals": []
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "评审并修订附件中的 WebSocket 出站统一调度设计。沿附件证据核对真实契约；无法验证的内容标记为 unknown。输出最终设计、验收覆盖矩阵、裁决账本和残余风险。",
+      "expected_output": "识别 no-wait 交付语义、running 新版本保护和 stale-running 索引问题，同时保留用户已接受的前向切换边界。",
+      "files": [
+        "evals/files/backend/websocket-outbound-contract/design.md",
+        "evals/files/backend/websocket-outbound-contract/evidence.md"
+      ],
+      "expectations": [
+        "指出 PostCmdNoWait 返回 ok 不能证明每个 MAC 已送达，并引用 PostCmdWait 的逐 MAC 离线语义作对照",
+        "指出在线集合降为零却不覆盖 Redis 会留下假在线，并要求完整空快照与 freshness 门禁",
+        "要求 snapshot 与 rebuild_on_send 都使用 payload_version 防止旧 claimant 删除新 payload",
+        "指出 stale-running 释放需要独立的 (status, claimed_at) 索引",
+        "明确 dispatcher 只读 ClientOnlineMacCacheKey，不新增第二条在线缓存写路径",
+        "不把用户已接受的不迁移旧 system_websocket_* 数据升级为 P0 或 P1"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "评审并修订附件中的 WebSocket backpressure 与 signal-pprof 实施计划。核对代码谓词、计划内部一致性、验证可执行性和已确认非目标。",
+      "expected_output": "纠正 backlog 统计契约和高风险实施顺序，记录测试、自包含性、调优及 profile 文件验证问题，不越界增加 HTTP pprof。",
+      "files": [
+        "evals/files/backend/websocket-backpressure-pprof-plan/design.md",
+        "evals/files/backend/websocket-backpressure-pprof-plan/evidence.md"
+      ],
+      "expectations": [
+        "把 backlog 定义为匹配 ClaimDueMessages 的 due pending 加 running，而不是全部 pending",
+        "发现 cap=1 时 Running=0、Total=1 与 capped-per-category 规则及 fixture 矛盾",
+        "要求 backlog=false 正常 claim/send 路径和始终执行的 timeout cleanup 都有验证",
+        "指出继续降低 claimLimit 会降低排空吞吐，不能作为 backlog 下降过慢的默认方案",
+        "指出 Sleep(100ms) 和秒级文件名不足以稳定验证 CPU profile 生命周期与连续信号",
+        "不建议 net/http/pprof，不修改正常 PING/PONG 或 channel-closing 日志"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "评审并修订附件中的企微智能表格到禅道同步设计。重点核对外部接口契约、实施顺序、零写入门禁和用户已接受的范围。",
+      "expected_output": "前置真实契约验证，修正禅道父子任务和固定列类型门禁，同时避免把小规模系统已接受的并发与容量取舍重新升级为阻塞项。",
+      "files": [
+        "evals/files/fullstack/wecom-zentao-contract-gates/design.md",
+        "evals/files/fullstack/wecom-zentao-contract-gates/evidence.md"
+      ],
+      "expectations": [
+        "把企微 view 读取和禅道父子任务/状态动作真实契约验证移到后续实现之前",
+        "指出禅道 v1 create 字段没有 parent，要求创建后通过已验证路径设置并重新查询 direct parent",
+        "要求固定列名称和类型预检失败时两个外部系统保持零写入，并返回可操作错误",
+        "保留 estimate=80 作为减少维护工作的明确默认值，不扩展为动态估算模块",
+        "不把用户已接受的小规模单进程、无并发治理和无队列容量上限升级为 P0 或 P1",
+        "不把已接受的精确同名任务复用和内网 HTTP 取舍重新升级为阻塞项"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "评审并修订附件中的首登强制改密权限边界方案。沿附件证据核对权限契约、影响范围、验证方式和待决事项；无法验证的内容标记为 unknown。输出最终设计、验收覆盖矩阵、裁决账本和残余风险。",
+      "expected_output": "把已证实可由未授权调用方选择目标用户并修改凭据的旁路定为 P0，要求与目标用户及首登流程绑定的正向授权，并用实际路由证据识别共享处理器的额外入口而不擅自决定其产品范围。",
+      "files": [
+        "evals/files/security/first-login-password-reset-boundary/design.md",
+        "evals/files/security/first-login-password-reset-boundary/evidence.md"
+      ],
+      "expectations": [
+        "指出删除精确豁免后 ^/entry-a/(.*) 仍会放行该请求，不能声称认证边界已关闭",
+        "要求密码重置具有服务端签发、绑定目标用户和首登流程、短时且一次性的正向授权证明",
+        "引用 entry_a.py 与 entry_b.py 均挂载 ForceChangePasswordHandler 的证据，说明影响范围不止目标入口",
+        "把入口 B 的具体处置标为 requires-user-decision，不因发现复用就自动扩大修改范围",
+        "保持 username、new_password 和响应 JSON，不强制把整个入口改造成普通会话认证",
+        "在证据已证明未授权调用可选择目标用户并修改凭据时定为 P0；部署可达性作为运行态 unknown，不降低设计 finding 严重度"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "评审并修订附件中的异步资源规格变更与业务元数据同步方案。沿附件证据核对成功语义、权威状态、失败收敛和可执行验证；无法验证的内容标记为 unknown。输出最终设计、验收覆盖矩阵、裁决账本和残余风险。",
+      "expected_output": "识别异步请求受理与最终完成的差异，以基础设施提供方终态约束业务有效规格，并补齐失败、超时和回滚后的条件对账而不写死实现机制；外部实现缺失证据保留为 unknown 发布门禁，不直接升级为 P0。",
+      "files": [
+        "evals/files/cloud/async-resize-metadata-commit/design.md",
+        "evals/files/cloud/async-resize-metadata-commit/evidence.md"
+      ],
+      "expectations": [
+        "指出 provider.resize 同步返回只表示异步请求被接受，不能立即提交为 effective 规格",
+        "要求业务有效规格以提供方最终资源记录为权威，guest 指标只作运行态佐证",
+        "覆盖最终成功、失败、超时和回滚后的状态收敛与恢复路径",
+        "要求 reconciliation 使用资源 ID 和预期旧值等条件门禁，避免覆盖后续并发变更",
+        "允许 pending/effective、延迟提交、事件或条件轮询等最小实现，不强制队列或固定框架",
+        "不把缺少 confirm 操作直接断言为根因，也不通过重放生产 resize 做验证",
+        "把终态触发器、状态枚举、客户端成功语义和最终规格映射的缺失证据标为 unknown 发布门禁，不把四项一律升级为 P0"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "评审并修订附件中的外部日期口令 API 设计。沿附件证据核对安全契约、处理顺序、兼容边界、验证门禁和残余风险；无法验证的内容标记为 unknown。输出最终设计、验收覆盖矩阵、裁决账本和残余风险。",
+      "expected_output": "不制造缺少证据的 P0/P1，保留已确认的认证、输入、日志和兼容边界；指出正文读取早于来源 IP 限流会产生不受连接数约束的累计成本，但在缺少可用性影响证据时仍定为 P2，并把运行环境与测试结果保留为 unknown。",
+      "files": [
+        "evals/files/api/passcode-approved-boundaries/design.md",
+        "evals/files/api/passcode-approved-boundaries/evidence.md"
+      ],
+      "expectations": [
+        "没有证据支持的 P0/P1；若提出阻塞 finding，必须引用输入并证明违反未被接受的设计契约",
+        "不把旧内部 GET 未认证旁路或既有客户端自动获得新能力重新升级为 P0/P1",
+        "不要求新增权限或 migration、迁入其它路径、记录业务审计正文或口令 hash、建设通用 API 引擎",
+        "若指出正文读取早于来源 IP 限流，则引用三个视图的调用顺序，说明 1024 字节只限制单请求而不限制并发累计成本，并在缺少可用性影响证据时定为 P2",
+        "把目标测试结果及生产 TLS、Redis、可信代理、代理限制和密钥配置标为 unknown 或验收门禁",
+        "保留 HMAC、时间窗、Nonce、双层限流、严格日期、固定响应、no-store、非敏感日志和兼容回归契约"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "评审并修订附件中的多租户导出下载设计。沿附件证据核对授权边界、共享实现影响范围、验证方式和待决事项；无法验证的内容标记为 unknown。输出最终设计、验收覆盖矩阵、裁决账本和残余风险。",
+      "expected_output": "识别用户可控任务 ID 仅按全局 ID 查询且返回前未校验租户导致的跨租户读取 P0；部署可达性保持运行态 unknown；用实际调用证据识别共享解析函数的定时消费者，并把其具体处置留给用户裁决。",
+      "files": [
+        "evals/files/security/cross-tenant-export-download/design.md",
+        "evals/files/security/cross-tenant-export-download/evidence.md"
+      ],
+      "expectations": [
+        "把用户可控 task_id、只按全局 ID 查询、任务 tenant_id 与 session.tenant_id 未比较后返回文件的链路定为 P0",
+        "部署和网络可达性缺少证据时标为运行态 unknown，不降低已由设计证据成立的 P0",
+        "引用 deliver_scheduled_export 也调用 resolve_export_task 的证据，说明共享实现还有交互范围外的消费者",
+        "把定时消费者的具体处置标为 requires-user-decision，不因发现复用就自动扩大修改范围",
+        "修订要求交互式下载绑定会话租户与任务租户，同时保持既有响应与存储结构",
+        "不强制全局权限框架、统一身份模型、额外加密或审计平台、数据库迁移"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "评审并修订附件中的外部有界清单准入设计。沿附件证据核对处理顺序、容量边界、已接受风险、验证门禁和残余风险；无法验证的内容标记为 unknown。输出最终设计、验收覆盖矩阵、裁决账本和残余风险。",
+      "expected_output": "不制造缺少证据的 P0/P1；指出正文读取解析早于租户准入和应用层并发配额会形成并发累计成本，但在缺少可用性影响证据时保持 P2；保留 accepted risk，并把运行环境与测试结果记录为 unknown 门禁。",
+      "files": [
+        "evals/files/api/bounded-manifest-admission/design.md",
+        "evals/files/api/bounded-manifest-admission/evidence.md"
+      ],
+      "expectations": [
+        "没有输入证据支持的 P0/P1；若提出严重 finding，必须证明违反未被接受的设计契约",
+        "引用输入证据中的处理顺序并定为 P2：可使用具体函数名，或使用与输入一一对应且无歧义的‘有界读取/解析 → 租户准入 → 应用并发配额’语义链；只给泛泛容量建议仍不算命中",
+        "说明 8192 字节只限制单请求，N 个并发连接仍可形成约 N × 8192 字节累计读取与解析成本；上游限制只影响规模和成本位置",
+        "把代理限制、读取超时、worker/连接模型、执行器容量和目标测试结果标为 unknown 发布或验收门禁",
+        "不重开既有密钥获得新类型授权、不增加按类型授权或 migration、不记录正文、既有内部入口不变等 accepted risk",
+        "没有已接受 P0/P1 时允许 PASS，并不建设通用 API 框架或迁移既有内部入口"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "评审并修订附件中的执行池标识在线迁移设计。沿附件证据核对滚动发布兼容、数据回填、读写切换、约束启用、回滚和历史异常数据；无法验证的内容标记为 unknown。输出最终设计、验收覆盖矩阵、裁决账本和残余风险。",
+      "expected_output": "识别滚动发布期间一次回填与旧 writer 共存造成的新旧表示分叉，把设计链路定为 P1，并用兼容写入、并发安全回填、稳定零漂移和旧 writer 门禁闭环；生产运行证据保持 unknown，模糊历史别名留给用户裁决。",
+      "files": [
+        "evals/files/database/rolling-schema-cutover/design.md",
+        "evals/files/database/rolling-schema-cutover/evidence.md"
+      ],
+      "expectations": [
+        "把一次回填、旧 writer 继续写旧字段、新读路径只读 ID 和默认池/失败串成 P1",
+        "把生产实例、流量和部署结果标为 unknown，且不降低已成立 P1",
+        "要求兼容 writer 与旧 writer 清退/隔离门禁先于读切换",
+        "要求并发安全回填、重复 reconciliation 和稳定零漂移门禁，之后才验证约束和 contract",
+        "把无法唯一映射的历史别名处置标为 requires-user-decision，不发明默认映射",
+        "保持零停机、外部 API 和非目标边界，不强制通用迁移平台或停机发布"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "评审并修订附件中的功能配置缓存设计。沿附件证据核对完整性、版本切换、控制面故障、紧急覆盖、可观测性、验证门禁和已接受风险；无法验证的内容标记为 unknown。输出最终设计、验收覆盖矩阵、裁决账本和残余风险。",
+      "expected_output": "不制造缺少证据的 P0/P1，保留签名、单调 revision、原子替换、受限 last-known-good、安全基线和只减权覆盖；把缺少每实例生效状态定为 P2 可观测性缺口，并把生产配置、测试和部署保留为 unknown 发布门禁。",
+      "files": [
+        "evals/files/configuration/signed-config-cache/design.md",
+        "evals/files/configuration/signed-config-cache/evidence.md"
+      ],
+      "expectations": [
+        "没有输入证据支持的 P0/P1；严重 finding 必须证明违反未被接受的契约",
+        "指出缺少实例生效 revision、配置年龄、last-known-good 和紧急覆盖状态是 P2 可观测性缺口，不升级 P1",
+        "不重开已接受的 60 秒传播差异和 24 小时 last-known-good 窗口",
+        "保留签名、单调 revision、原子替换、过期安全基线和只减权紧急覆盖",
+        "把生产密钥、时钟、文件权限、目标测试和真实部署标为 unknown 发布门禁，不伪装成已验证或严重 finding",
+        "没有已接受 P0/P1 时允许设计 PASS，不要求全局强一致或通用平台"
+      ]
+    }
+  ]
 }
